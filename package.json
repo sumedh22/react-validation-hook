@@ -1,6 +1,6 @@
 {
     "name": "react-validation-hook",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "React hook for sync and async validation in forms",
     "author": "sumedh22",
     "license": "MIT",
