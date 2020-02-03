@@ -10,6 +10,8 @@ Visit the [website](https://sumedh22.github.io/react-validation-hook/) for demo 
 * Nice and Easy hook based interface
 * Supports both Synchronous and Asynchronous validation
 * Supports validators like range, required, length, regex out of the box
+* Specify custom validators!
+* Out of the box formatted error messages, which could be overwritten
 
 ## Install
 

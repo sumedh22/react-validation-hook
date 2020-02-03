@@ -5,14 +5,21 @@ const VALIDATION_TYPES = {
     ASYNC: "ASYNC",
     RANGE: "RANGE",
     LENGTH: "LENGTH",
-    REGEX: "REGEX"
+    REGEX: "REGEX",
+    CUSTOM: "CUSTOM"
 };
 
 const ERR_MESSAGES = {
-    [VALIDATION_TYPES.REQUIRED]: "The input is required",
-    [VALIDATION_TYPES.ASYNC]: "Error running custom validator for {value}",
-    [VALIDATION_TYPES.RANGE]: "The input value length exceeds {max} or less than {min}",
-    [VALIDATION_TYPES.LENGTH]: "The input length exceeds {max} or less than {min}",
+    [VALIDATION_TYPES.REQUIRED]: "Value is required",
+    [VALIDATION_TYPES.ASYNC]: "Error running custom validator with {value}",
+    [VALIDATION_TYPES.RANGE]: {
+        min: "Value is less than {min}",
+        max: "Value exceeds {max}"
+    },
+    [VALIDATION_TYPES.LENGTH]: {
+        min: "Length is less than {min}",
+        max: "Length exceeds {max}"
+    },
     [VALIDATION_TYPES.REGEX]: "The value entered ({value}) does not maches the pattern ({pattern})"
 };
 //Validator constructs
@@ -25,22 +32,27 @@ export const asyncValidation = (asyncFunction, errorMessage) => ({
     errorMessage: errorMessage || ERR_MESSAGES[VALIDATION_TYPES.ASYNC],
     asyncFunction
 });
-export const rangeValidation = (min, max, errorMessage) => ({
+export const rangeValidation = (min, max, messages) => ({
     type: VALIDATION_TYPES.RANGE,
-    errorMessage: errorMessage || ERR_MESSAGES[VALIDATION_TYPES.RANGE],
+    messages: messages || ERR_MESSAGES[VALIDATION_TYPES.RANGE],
     min,
     max
 });
-export const lengthValidation = (min, max, errorMessage) => ({
+export const lengthValidation = (min, max, messages) => ({
     type: VALIDATION_TYPES.LENGTH,
-    errorMessage: errorMessage || ERR_MESSAGES[VALIDATION_TYPES.LENGTH],
+    messages: messages || ERR_MESSAGES[VALIDATION_TYPES.LENGTH],
     min,
     max
 });
-export const regexValidation = ({ pattern, errorMessage }) => ({
+export const regexValidation = (pattern, errorMessage) => ({
     type: VALIDATION_TYPES.REGEX,
     errorMessage: errorMessage || ERR_MESSAGES[VALIDATION_TYPES.REGEX],
     pattern
+});
+export const customValidation = (syncFunction, errorMessage) => ({
+    type: VALIDATION_TYPES.CUSTOM,
+    errorMessage: errorMessage,
+    syncFunction
 });
 
 //hook API
@@ -61,7 +73,7 @@ export const useValidator = (validators, defaultValue) => {
             setPending(false);
             setError(res);
         });
-    }, [])
+    }, []);
 
     const onChange = (changeHandler, valueMapper) => e => {
         const value = valueMapper ? valueMapper(e) : e.target.value;
@@ -94,6 +106,9 @@ export const useValidator = (validators, defaultValue) => {
                     case VALIDATION_TYPES.REGEX:
                         await Promise.resolve(regexValidator(value, validators[i]));
                         break;
+                    case VALIDATION_TYPES.CUSTOM:
+                        await Promise.resolve(customValidator(value, validators[i]));
+                        break;
                     default:
                         break;
                 }
@@ -112,34 +127,48 @@ export const useValidator = (validators, defaultValue) => {
 //validation handlers
 const requiredValidator = (value, context) => {
     if (!value) {
-        throw new Error(format(value, context));
+        throw new Error(format(value, context, context.errorMessage));
     }
 };
 const lengthValidator = (value, context) => {
-    const l = String(value).length;
-    if (l < (context.min || 0) || l > context.max) {
-        throw new Error(format(value, context));
+    const l = String(value || '').length;
+    if (context.min) {
+        if (l < context.min) {
+            throw new Error(format(value, context, context.messages.min));
+        }
+    }
+
+    if (context.max) {
+        if (l > context.max) {
+            throw new Error(format(value, context, context.messages.max));
+        }
     }
 };
 const rangeValidator = (value, context) => {
-    if (value < context.min || value > context.max) {
-        throw new Error(format(value, context));
+    if (value < context.min) {
+        throw new Error(format(value, context, context.messages.min));
+    }
+    if (value > context.max) {
+        throw new Error(format(value, context, context.messages.max));
     }
 };
 const regexValidator = (value, context) => {
     if (!new RegExp(context.pattern).test(value)) {
-        throw new Error(format(value, context));
+        throw new Error(format(value, context, context.errorMessage));
     }
 };
 
 const asyncValidator = async(value, context) => {
     await context.asyncFunction.call(this, value, context);
 };
+const customValidator = async(value, context) => {
+    await context.syncFunction.call(this, value, context);
+};
 
-const format = (value, context) => {
-    let message = context.errorMessage;
-    Object.keys({...context, value }).forEach(i => {
-        message = message.replace(`{${i}}`, context[i]);
+const format = (value, context, message) => {
+    const ctx = {...context, value };
+    Object.keys(ctx).forEach(i => {
+        message = message.replace(`{${i}}`, ctx[i]);
     });
     return message;
-}
+};
