@@ -4,6 +4,11 @@
 
 [![NPM](https://img.shields.io/npm/v/react-validation-hook.svg)](https://www.npmjs.com/package/react-validation-hook) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
+# Features
+* Nice and Easy hook based interface
+* Supports both Synchronous and Asynchronous validation
+* Supports validators like range, required, length, regex out of the box
+
 ## Install
 
 ```bash
@@ -40,9 +45,6 @@ export default () => {
   const changeHandler = e => {
     console.log(e.target.value);
   };
-  useEffect(() => {
-    if (!pending) console.log(pending, error);
-  }, [pending, error]);
 
   return (
     <div>
