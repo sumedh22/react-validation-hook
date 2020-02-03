@@ -3,7 +3,9 @@
 > React hook for sync and async validation in forms
 
 [![NPM](https://img.shields.io/npm/v/react-validation-hook.svg)](https://www.npmjs.com/package/react-validation-hook) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+# Website
 
+Visit the [website](https://sumedh22.github.io/react-validation-hook/) for demo and docs
 # Features
 * Nice and Easy hook based interface
 * Supports both Synchronous and Asynchronous validation
